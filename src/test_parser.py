@@ -1,6 +1,6 @@
 import unittest
 
-from parser import split_nodes_delimiter
+from parser import extract_markdown_images, extract_markdown_links, split_nodes_delimiter
 from textnode import TextNode, TextType
 
 
@@ -59,6 +59,46 @@ class TestSplitNodesDelimiter(unittest.TestCase):
                 TextNode(" is text with a ", TextType.TEXT),
                 TextNode("bold word", TextType.BOLD),
             ],
+        )
+
+
+class TestExtractMarkdownImages(unittest.TestCase):
+    def test_extract(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_mixed(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+
+class TestExtractMarkdownLinks(unittest.TestCase):
+    def test_extract(self):
+        matches = extract_markdown_links(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertListEqual(
+            [
+                ("to boot dev", "https://www.boot.dev"),
+                ("to youtube", "https://www.youtube.com/@bootdotdev"),
+            ],
+            matches,
+        )
+
+    def test_extract_mixed(self):
+        matches = extract_markdown_links(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertListEqual(
+            [
+                ("to boot dev", "https://www.boot.dev"),
+                ("to youtube", "https://www.youtube.com/@bootdotdev"),
+            ],
+            matches,
         )
 
 
