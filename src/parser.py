@@ -1,5 +1,6 @@
 import re
 
+from blocks import BlockType
 from textnode import TextNode, TextType
 
 
@@ -172,3 +173,31 @@ def markdown_to_blocks(markdown: str):
             blocks.append(block)
 
     return blocks
+
+
+def block_to_block_type(markdown: str):
+    heading_pattern = re.compile(r"^#{1,6} .+")
+    lines = markdown.splitlines()
+
+    if re.match(heading_pattern, markdown):
+        return BlockType.HEADING
+
+    if (len(markdown) > 3) and (markdown[:3] == "```") and (markdown[-3:] == "```"):
+        return BlockType.CODE
+
+    if all([line[0] == ">" for line in lines]):
+        return BlockType.QUOTE
+
+    if all([line[:2] == "- " for line in lines]):
+        return BlockType.UNORDERED_LIST
+
+    if all(
+        [
+            line.split()[0] == f"{i}."
+            for i, line in enumerate(lines, start=1)
+            if len(line.splitlines()) > 0
+        ]
+    ):
+        return BlockType.ORDERED_LIST
+
+    return BlockType.PARAGRAPH

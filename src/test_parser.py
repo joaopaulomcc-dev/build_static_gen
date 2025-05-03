@@ -1,6 +1,8 @@
 import unittest
 
+from blocks import BlockType
 from parser import (
+    block_to_block_type,
     extract_markdown_images,
     extract_markdown_links,
     markdown_to_blocks,
@@ -261,6 +263,38 @@ class TestMardownToBlocks(unittest.TestCase):
                 "- This is a list\n- with items",
             ],
         )
+
+
+class TestBlockToBlockType(unittest.TestCase):
+    def test_paragraph(self):
+        text = "This is a paragraph"
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.PARAGRAPH)
+
+    def test_heading(self):
+        text = "### Heading"
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.HEADING)
+
+    def test_code(self):
+        text = '```python\ns = "Python syntax highlighting"\nprint s```'
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.CODE)
+
+    def test_quote(self):
+        text = "> Blockquotes are very handy in email to emulate reply text.\n> This line is part of the same quote."
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.QUOTE)
+
+    def test_unordered_list(self):
+        text = "- First item\n- Second item\n- Third Item"
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.UNORDERED_LIST)
+
+    def test_ordered_list(self):
+        text = "1. First item\n2. Second item\n3. Third Item"
+        block_type = block_to_block_type(text)
+        self.assertEqual(block_type, BlockType.ORDERED_LIST)
 
 
 if __name__ == "__main__":
