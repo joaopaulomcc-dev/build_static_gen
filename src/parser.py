@@ -67,6 +67,10 @@ def split_nodes_image(old_nodes: list[TextNode]):
                     img_nodes.append(temp_node)
                     continue
 
+                if img_str == temp_node.text:
+                    img_nodes.append(TextNode(text=alt_text, text_type=TextType.IMAGE, url=src))
+                    continue
+
                 split_text = temp_node.text.split(img_str)
 
                 for i, split in enumerate(split_text):
@@ -220,45 +224,87 @@ def markdown_to_html_node(markdown: str):
 
         match block_type:
             case BlockType.HEADING:
-                n_hash = block.split()[0].count("#")
-                n_hash = n_hash if n_hash <= 6 else 6
-
-                children = text_to_children(block)
-                block_node = ParentNode(tag=f"h{n_hash}", children=[children])
+                block_node = process_heading(block)
 
             case BlockType.CODE:
-                code_text_node = TextNode(
-                    text=block.replace("```", "").lstrip(), text_type=TextType.CODE
-                )
-                code_html_node = text_node_to_html_node(code_text_node)
-                block_node = ParentNode(tag="pre", children=[code_html_node])
+                block_node = process_code(block)
 
             case BlockType.QUOTE:
-                children = text_to_children(block)
-                block_node = ParentNode(tag="blockquote", children=[children])
+                block_node = process_quote(block)
 
             case BlockType.UNORDERED_LIST:
-                children = []
-                for line in block.splitlines():
-                    line_nodes = text_to_children(line)
-                    line_node = ParentNode(tag="li", children=line_nodes)
-                    children.append(line_node)
-
-                block_node = ParentNode(tag="ul", children=children)
+                block_node = process_unordered_list(block)
 
             case BlockType.ORDERED_LIST:
-                children = []
-                for line in block.splitlines():
-                    line_nodes = text_to_children(line)
-                    line_node = ParentNode(tag="li", children=line_nodes)
-                    children.append(line_node)
-
-                block_node = ParentNode(tag="ol", children=children)
+                block_node = process_ordered_list(block)
 
             case BlockType.PARAGRAPH:
-                children = text_to_children(block)
-                block_node = ParentNode(tag="p", children=children)
+                block_node = process_paragraph(block)
 
         blocks_nodes.append(block_node)
 
     return ParentNode(tag="div", children=blocks_nodes)
+
+
+def process_paragraph(block):
+    children = text_to_children(block)
+    block_node = ParentNode(tag="p", children=children)
+    return block_node
+
+
+def process_ordered_list(block):
+    children = []
+    for i, line in enumerate(block.splitlines(), start=1):
+        line = line.replace(f"{i}.", "").lstrip()
+        line_nodes = text_to_children(line)
+        line_node = ParentNode(tag="li", children=line_nodes)
+        children.append(line_node)
+
+    block_node = ParentNode(tag="ol", children=children)
+
+    return block_node
+
+
+def process_unordered_list(block):
+    children = []
+    for line in block.splitlines():
+        line = line[1:].lstrip()
+        line_nodes = text_to_children(line)
+        line_node = ParentNode(tag="li", children=line_nodes)
+        children.append(line_node)
+
+    block_node = ParentNode(tag="ul", children=children)
+
+    return block_node
+
+
+def process_quote(block):
+    new_block = ""
+    for line in block.splitlines():
+        line = line[1:].lstrip()
+        new_block = new_block + line + "\n"
+
+    children = text_to_children(new_block)
+    block_node = ParentNode(tag="blockquote", children=children)
+
+    return block_node
+
+
+def process_code(block):
+    code_text_node = TextNode(text=block.replace("```", "").lstrip(), text_type=TextType.CODE)
+    code_html_node = text_node_to_html_node(code_text_node)
+    block_node = ParentNode(tag="pre", children=[code_html_node])
+
+    return block_node
+
+
+def process_heading(block):
+    n_hash = block.split()[0].count("#")
+    n_hash = n_hash if n_hash <= 6 else 6
+
+    block = block.replace(n_hash * "#", "").lstrip()
+
+    children = text_to_children(block)
+    block_node = ParentNode(tag=f"h{n_hash}", children=children)
+
+    return block_node
