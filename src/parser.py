@@ -117,6 +117,10 @@ def split_nodes_link(old_nodes: list[TextNode]):
                     link_nodes.append(temp_node)
                     continue
 
+                if link_str == temp_node.text:
+                    link_nodes.append(TextNode(text=anchor_text, text_type=TextType.LINK, url=href))
+                    continue
+
                 split_text = temp_node.text.split(link_str)
 
                 for i, split in enumerate(split_text):

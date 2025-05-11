@@ -50,3 +50,18 @@ def generate_page(from_path: Path, template_path: Path, dest_path: Path):
         os.mkdir(dest_path.parent)
 
     dest_path.write_text(page)
+
+
+def generate_pages_recursive(dir_path_content: Path, template_path: Path, dest_dir_path: Path):
+    for path in dir_path_content.glob("*"):
+        if path.suffix == ".md":
+            dest_path = (dest_dir_path / path.name).with_suffix(".html")
+            generate_page(path, template_path, dest_path)
+
+        elif path.is_dir():
+            new_dest_dir_path = dest_dir_path / path.name
+
+            if not new_dest_dir_path.is_dir():
+                os.mkdir(new_dest_dir_path)
+
+            generate_pages_recursive(path, template_path, new_dest_dir_path)
